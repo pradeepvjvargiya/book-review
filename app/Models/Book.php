@@ -42,7 +42,7 @@ class Book extends Model
         return $query->having('reviews_count', '>=', $minReviews);
     }
 
-    public function dateRangeFilter(Builder $query, $from = null, $to = null)
+    private function dateRangeFilter(Builder $query, $from = null, $to = null)
     {
         if($from && !$to) {
             $query->where('created_at', '>=', '$from');
@@ -52,4 +52,6 @@ class Book extends Model
             $query->whereBetween('created_at', [$from, $to]);
         }
     }
+
+    
 }

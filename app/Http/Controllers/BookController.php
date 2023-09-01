@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use Illuminate\Http\Request;
 
+
 class BookController extends Controller
 {
     /**
@@ -28,7 +29,11 @@ class BookController extends Controller
             default => $books->latest()
         };
 
-        $books = $books->get();
+        // $books = $books->get();
+
+        $cacheKey = 'books:' . $filter . ':' . $title;
+        $books = cache()->remember($cacheKey, 3600, fn() => $books->get());
+        
         return view('books.index', ['books' => $books]);
     }
 
@@ -51,16 +56,19 @@ class BookController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Book $book)
+    public function show(int $id)
     {
-        return view(
-            'books.show',
-            [
-                'book' => $book->load([
-                    'reviews' => fn($query) => $query->latest()
-                ])
-            ]
+        $cacheKey = 'book:' . $id;
+
+        $book = cache()->remember(
+            $cacheKey,
+            3600,
+            fn() =>
+            Book::with([
+                'reviews' => fn($query) => $query->latest()
+            ])->withAvgRating()->withReviewsCount()->findOrFail($id)
         );
+        return view('books.show',['book' => $book]);
     }
 
     /**
